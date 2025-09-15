@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/jovanlock/devops-php-demo.git'
+                git branch: 'main', url: 'https://github.com/jovanlock/teste_deploiement.git'
             }
         }
         
