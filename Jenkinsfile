@@ -4,36 +4,28 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/jovanlock/teste_deploiement.git'
+                git branch: 'main', url: 'https://github.com/jovanlock/devops-php-demo.git'
             }
         }
         
         stage('Build') {
             steps {
-                echo 'Installing dependencies...'
+                echo 'Building Docker images...'
+                sh 'docker-compose build'
             }
         }
 
-        stage('Test') {
+        stage('Test DB Connection') {
             steps {
-                echo 'Running tests...'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                echo 'Building Docker image...'
-                sh 'docker build -t my-site:latest .'
+                echo 'Testing DB connection...'
+                sh 'docker-compose run --rm web php -r "include \'config.php\'; echo \'DB OK\';"'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Simulating deployment...'
-                sh 'docker rm -f my-site || true'
-                sh 'docker run -d -p 80:80 --name my-site my-site:latest'
-
-                sh 'echo Deploy done'
+                echo 'Deploying application...'
+                sh 'docker-compose up -d'
             }
         }
     }
