@@ -30,7 +30,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Simulating deployment...'
-                sh 'docker run -d -p 80:80 --name my-site my-site'
+                sh 'docker rm -f my-site || true'
+                sh 'docker run -d -p 80:80 --name my-site my-site:latest'
+
                 sh 'echo Deploy done'
             }
         }
