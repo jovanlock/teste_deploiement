@@ -7,37 +7,46 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/jovanlock/teste_deploiement.git'
             }
         }
-        
-        stage('Build') {
+
+        stage('Build PHP Image') {
             steps {
-                echo 'Building Docker images...'
-                sh 'docker-compose build'
+                sh 'docker build -t devops-php ./app'
             }
         }
 
-        stage('Test DB Connection') {
+        stage('Run MySQL') {
             steps {
-                echo 'Testing DB connection...'
-                sh 'docker-compose run --rm web php -r "include \'config.php\'; echo \'DB OK\';"'
+                sh '''
+                docker rm -f devops-db || true
+                docker run -d --name devops-db \
+                -e MYSQL_ROOT_PASSWORD=rootpassword \
+                -e MYSQL_DATABASE=devops_demo \
+                -p 3306:3306 \
+                mysql:8
+                '''
             }
         }
 
-        stage('Deploy') {
+        stage('Run PHP Web App') {
             steps {
-                echo 'Deploying application...'
-                sh 'docker compose build'
-                sh 'docker compose up -d'
-
+                sh '''
+                docker rm -f devops-web || true
+                docker run -d --name devops-web \
+                --link devops-db:db \
+                -p 8080:80 \
+                -e DB_HOST=db \
+                -e DB_USER=root \
+                -e DB_PASS=rootpassword \
+                -e DB_NAME=devops_demo \
+                devops-php
+                '''
             }
         }
-    }
 
-    post {
-        success {
-            echo '🎉 Pipeline succeeded!'
-        }
-        failure {
-            echo '❌ Pipeline failed!'
+        stage('Test App') {
+            steps {
+                sh 'curl -f http://localhost:8080 || exit 1'
+            }
         }
     }
 }
